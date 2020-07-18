@@ -1,0 +1,1 @@
+model_checkpoint_path: "event_detect/saver/cnn/cnn-3000"
