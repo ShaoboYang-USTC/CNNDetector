@@ -4,7 +4,7 @@ by Shaobo Yang, University of Science and Technology of China, 2020
 
 E-mail: <yang0123@mail.ustc.edu.cn>
 
-References: _Shaobo Yang, Jing Hu, Haijiang Zhang*, Guiquan Liu, Simultaneous Earthquake Detection on multiple stations via Convolutional Neural Network, Seismological Research Letters, in revision._
+References: _Shaobo Yang, Jing Hu, Haijiang Zhang*, Guiquan Liu, Simultaneous earthquake detection on multiple stations via convolutional neural network, Seismological Research Letters, in revision._
 
 This repository is used to store scripts and dataset.
 
