@@ -209,7 +209,7 @@ class CNN(object):
         class_prediction, confidence = sess.run([self.layer['class_prediction'], self.layer['class_prob']],
                                                 feed_dict={self.layer['input']: input_})
         confidence = confidence[:, 1]
-        if confidence >= self.config.prob:
+        if confidence > self.config.prob:
             class_prediction = 1
         else:
             class_prediction = 0

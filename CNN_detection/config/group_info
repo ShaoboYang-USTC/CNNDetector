@@ -1,0 +1,9 @@
+# Group 1:  The sac file name must follow the format: '*.sta_name.*'
+G04
+G06
+G07
+G08
+G09
+G10
+
+# Other groups ...

@@ -11,14 +11,13 @@ from obspy.signal.filter import bandpass
 
 from config.config import Config
 
+# def data_preprocess(data, filter_model='bandpass'):
+#     if filter_model == 'bandpass':
+#         data = bandpass(data, freqmin=5, freqmax=15, df=200)
 
-def data_preprocess(data, filter_model='bandpass'):
-    if filter_model == 'bandpass':
-        data = bandpass(data, freqmin=5, freqmax=15, df=200)
-
-    data = (data - np.mean(data)) / (np.max(np.absolute(data)) + 1)
-    data = np.absolute(data)
-    return data
+#     data = (data - np.mean(data)) / (np.max(np.absolute(data)) + 1)
+#     data = np.absolute(data)
+#     return data
 
 class Reader(object):
     def __init__(self):
@@ -27,7 +26,7 @@ class Reader(object):
         self.winsize = self.config.winsize
         self.beforename = self.get_filename('Noise')
         self.microSeismic = self.get_filename('Events')
-        self.aftername = self.get_filename('after')
+        # self.aftername = self.get_filename('after')
         #self.aftername = self.get_filename('detectingdata')
         # self.examplename = self.get_filename('example')
         # self.events_examplename = self.get_filename('events_example')
@@ -35,38 +34,30 @@ class Reader(object):
         # self.new_events = self.get_filename('new_events')
 
     def get_filename(self, dataset_type):
-        if dataset_type == 'after':
-            filename_dir = os.path.join(self.foldername, dataset_type)
-        else:
-            filename_dir = os.path.join(self.foldername, dataset_type)
-
+        filename_dir = os.path.join(self.foldername, dataset_type)
         filename_dict = dict()
         if os.path.exists(filename_dir):
             filename_list = os.listdir(filename_dir)
             for name in filename_list:
                 EventfileDir = os.path.join(filename_dir, name)
-                SACfiles = os.listdir(EventfileDir)
+                # SACfiles = os.listdir(EventfileDir)
                 os.chdir(EventfileDir)
                 for SACfilename in glob.glob('*E'):
-                    name_key = name
-                    if filename_dict.get(name_key) == None:
-                        filename_dict[name_key] = [[os.path.join(EventfileDir, SACfilename)],[],[]]
+                    E = os.path.join(EventfileDir, SACfilename[:-1]+'E')
+                    N = os.path.join(EventfileDir, SACfilename[:-1]+'N')
+                    Z = os.path.join(EventfileDir, SACfilename[:-1]+'Z')
+                    if name not in filename_dict.keys():
+                        filename_dict[name] = [[E],[N],[Z]]
                     else:
-                        filename_dict[name_key][0].append(os.path.join(EventfileDir, SACfilename))
-
-                for SACfilename in glob.glob('*N'):
-                    filename_dict[name_key][1].append(os.path.join(EventfileDir, SACfilename))
-
-                for SACfilename in glob.glob('*Z'):
-                    filename_dict[name_key][2].append(os.path.join(EventfileDir, SACfilename))
-
-
+                        filename_dict[name][0].append(E)
+                        filename_dict[name][1].append(N)
+                        filename_dict[name][2].append(Z)
         else:
             print('{} is not exist.'.format(filename_dir))
             return None
 
         filename_list = list(filename_dict.values()) #filename_dict.values每个值有三分量 总数为事件数目
-        #sort
+        # sort
         for i in range(len(filename_list)):
             for j in range(3):
                 filename_list[i][j].sort()
