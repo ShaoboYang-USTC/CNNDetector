@@ -3,7 +3,7 @@
 class Config(object):
     def __init__(self):
         # Path
-        self.root = '/home/yang/project/CNN_Earthquake_Detection/CNN_detection'
+        self.root = '/home/yang/project/CNNDetector/CNNDetector'
         self.data_foldername = self.root + '/data'
 
         # Detection parameters
@@ -12,7 +12,7 @@ class Config(object):
         self.winlag = 401         # step length    4s * 100Hz
         self.prob = 0.5
         self.group_num_thrd = 1   
-        self.bandpass = [4,15]    # bandpass 4-15 Hz
+        self.bandpass = [4, 15]   # bandpass 4-15 Hz
         self.plot = True          # plot detection results or not
         self.cut = True           # cut detection results or not
         self.new_scan = True      # If False, run the program from the breakpoint

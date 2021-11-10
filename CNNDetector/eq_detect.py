@@ -40,7 +40,7 @@ def main(model_name, new_scan=False, preprocess=True):
     resample = config.resample
 
     # read data folders
-    file_list = os.listdir(config.root+'/data/after')
+    file_list = os.listdir(config.data_foldername+'/after')
     file_list.sort()
     if new_scan == True:
         print('start new scan!')
@@ -89,7 +89,7 @@ def main(model_name, new_scan=False, preprocess=True):
     for file in file_list:
         sac_file_name = [[], [], []]
         all_group_sta_num = [0]*len(group)
-        path = os.path.join(config.root+'/data/after', file)
+        path = os.path.join(config.data_foldername+'/after', file)
         begin = datetime.datetime.now()
         group_E = [[] for _ in range(len(group))]
         group_N = [[] for _ in range(len(group))]
@@ -134,8 +134,10 @@ def main(model_name, new_scan=False, preprocess=True):
         print('Finish reading data.')
         
         print('Start detection.')
-        for windowed_st in st_all.slide(window_length=(config.winsize-1)/samples,
-                                        step=config.winlag/samples):
+        slices = st_all.slide(window_length=(config.winsize-1)/samples,
+                                        step=config.winlag/samples)
+        windowed_st = next(slices)      # skip the first window to avoid the taper influence
+        for windowed_st in slices:
             cur_sta = 0
             len_group_conf = 0
             group_class, group_conf = [], []
@@ -203,6 +205,7 @@ def main(model_name, new_scan=False, preprocess=True):
                 else:
                     group_class.append(0)
                     group_conf.append(0)
+            group_conf.sort(reverse=True)
 
             # consider the result of multiple groups
             pos_num = 0
@@ -228,8 +231,9 @@ def main(model_name, new_scan=False, preprocess=True):
                     end_flag = windowed_st[0].stats.endtime
                 else:
                     end_flag = windowed_st[0].stats.endtime
-            print("{} {} {} {} {:.8f} {:.8f}".format(class_pred,start_flag,end_flag, \
-                windowed_st[0].stats.starttime,confidence, group_max_conf))
+            print("{} {} {} {} {:.8f} {:.8f}".format(class_pred,start_flag,end_flag, 
+                  windowed_st[0].stats.starttime,confidence,group_conf[min(config.group_num_thrd-1, 
+                                                                           len(group_conf)-1)]))
 
             if class_pred == 0 and start_flag != -1:  #end_flag < windowed_st[0].stats.starttime:
                 confidence = max(list(confidence_total.keys()))
@@ -240,11 +244,10 @@ def main(model_name, new_scan=False, preprocess=True):
                 # end_local = end_total[j]
                 # event = [file, start_flag, end_flag,
                 #          confidence, start_local, end_local]
-                event_num += 1
                 group_max_conf = confidence_total[confidence][0]
                 start = confidence_total[confidence][1]
                 end = confidence_total[confidence][2]
-                event = [event_num, file, start_flag, end_flag, confidence, \
+                event = [file, start_flag, end_flag, confidence, \
                     max(pos_num_total), start, end, group_max_conf]
 
                 confidence_total={}
@@ -267,11 +270,10 @@ def main(model_name, new_scan=False, preprocess=True):
                 # end_local = end_total[j]
                 # event = [file.split('/')[-2], start_flag, endtime,
                 #          confidence, start_total, end_total]
-                event_num += 1
                 group_max_conf = confidence_total[confidence][0]
                 start = confidence_total[confidence][1]
                 end = confidence_total[confidence][2]
-                event = [event_num, file, start_flag, endtime, confidence, \
+                event = [file, start_flag, endtime, confidence, \
                     max(pos_num_total), start, end, group_max_conf]
 
                 event_list.append(event)
@@ -282,19 +284,23 @@ def main(model_name, new_scan=False, preprocess=True):
             new_event_list = [event_list[0]]
             for i in range(1, len(event_list)):
                 if event_list[i][1] > new_event_list[-1][1] and \
-                event_list[i][1] < new_event_list[-1][1]+1000/(config.resample if config.resample else 200):
+                event_list[i][1] < new_event_list[-1][1] + 1000*windowed_st[0].stats.delta:
                 # if event_list[i][1] > new_event_list[-1][1] and event_list[i][1] < new_event_list[-1][2]:
                     new_event_list[-1][2] = event_list[i][2]
                 else:
                     new_event_list.append(event_list[i])
+            # Add index
+            for i in range(len(new_event_list)):
+                event_num += 1
+                new_event_list[i].insert(0, event_num)
         else:
             new_event_list = []
 
         # write event list
-        if len(event_list) != 0:
+        if len(new_event_list) != 0:
             with open(config.root + '/event_detect/detect_result/' + model_name + '/events_list.csv', mode='a', newline='') as f:
                 csvwriter = csv.writer(f)
-                for event in event_list:
+                for event in new_event_list:
                     csvwriter.writerow(event)
                 f.close()
 
@@ -347,7 +353,7 @@ def main(model_name, new_scan=False, preprocess=True):
                 s=''
                 
                 s+="cut %s %s \n"%(cut_b, cut_e)
-                s+="r %s/* \n"%(config.root+'/data/after/'+file)
+                s+="r %s/* \n"%(config.data_foldername+'/after/'+file)
                 s+="w dir %s over \n"%(save_path)
                 s+="quit \n"
 
