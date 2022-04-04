@@ -126,8 +126,7 @@ def main(model_name, new_scan=False, preprocess=True):
         st_N = reduce(lambda st1, st2:st1+st2, flatten_group_N)
         st_Z = reduce(lambda st1, st2:st1+st2, flatten_group_Z)
         st_all = st_E + st_N + st_Z
-        # st_all = st_all.slice(max_start_time, min_end_time)
-        st_all = st_all.slice(max_start_time, max_start_time + 600)
+        st_all = st_all.slice(max_start_time, min_end_time)
         all_sta_num = len(flatten_group_Z)
         if resample:
             st_all = st_all.resample(sampling_rate = resample)
