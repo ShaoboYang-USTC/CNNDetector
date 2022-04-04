@@ -70,7 +70,6 @@ def main(model_name, new_scan=False, preprocess=True):
         from tflib.models import Model
 
         model = CNN()
-        # sess = tf.Session(config=tf.ConfigProto(device_count={"CPU":20},inter_op_parallelism_threads=0,intra_op_parallelism_threads=0))
         sess = tf.Session()
         saver, global_step = Model.continue_previous_session(sess,
                                                              model_file='cnn',
@@ -95,6 +94,8 @@ def main(model_name, new_scan=False, preprocess=True):
         group_N = [[] for _ in range(len(group))]
         group_Z = [[] for _ in range(len(group))]
         print('Start reading data: %s.'%file)
+        max_start_time = None 
+        min_end_time = None 
         for i in range(len(group)):
             for sta in group[i]:
                 if len(glob.glob(path+'/'+'*'+sta+'.*')) == 3:
@@ -108,6 +109,16 @@ def main(model_name, new_scan=False, preprocess=True):
                     group_E[i].append(obspy.read(sacfile_E))
                     group_N[i].append(obspy.read(sacfile_N))
                     group_Z[i].append(obspy.read(sacfile_Z))
+                    start_time = group_Z[i][-1][0].stats.starttime
+                    end_time = group_Z[i][-1][0].stats.endtime
+                    if max_start_time:
+                        max_start_time = max_start_time if max_start_time > start_time else start_time
+                        min_end_time = min_end_time if min_end_time < end_time else end_time
+                    else:
+                        max_start_time = start_time
+                        min_end_time = end_time
+        if max_start_time >= min_end_time:
+            continue
         flatten_group_E = [st for each_group in group_E for st in each_group]
         flatten_group_N = [st for each_group in group_N for st in each_group]
         flatten_group_Z = [st for each_group in group_Z for st in each_group]
@@ -115,6 +126,8 @@ def main(model_name, new_scan=False, preprocess=True):
         st_N = reduce(lambda st1, st2:st1+st2, flatten_group_N)
         st_Z = reduce(lambda st1, st2:st1+st2, flatten_group_Z)
         st_all = st_E + st_N + st_Z
+        # st_all = st_all.slice(max_start_time, min_end_time)
+        st_all = st_all.slice(max_start_time, max_start_time + 600)
         all_sta_num = len(flatten_group_Z)
         if resample:
             st_all = st_all.resample(sampling_rate = resample)
