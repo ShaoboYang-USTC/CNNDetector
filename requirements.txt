@@ -1,4 +1,4 @@
-tensorflow==1.13.1
+tensorflow==2.7.2
 obspy==1.2.2
 matplotlib==2.1.2
 numpy==1.14.0
