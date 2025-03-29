@@ -11,6 +11,7 @@ import subprocess
 import numpy as np
 import obspy
 from obspy.signal.filter import bandpass
+from obspy import UTCDateTime
 import datetime
 # from csvreader import csvreader
 import time
@@ -351,13 +352,19 @@ def main(model_name, new_scan=False, preprocess=True):
         ## cut use SAC, raw data
         if cut:
             print('Cut detected events.')
+            kzdate = os.popen('saclst kzdate f %s'%sacfile_Z).read().split()[1]
+            kztime = os.popen('saclst kztime f %s'%sacfile_Z).read().split()[1]
+            kzdate = kzdate.replace('/', '-')
+            kzdatetime = UTCDateTime(f'{kzdate}T{kztime}')
             for event in new_event_list:
                 event_num, _, start_flag, end_flag, confidence, pos_num, start, end, group_max_conf = event
                 save_path = config.root + '/event_detect/detect_result/cut/' \
                     + str(int(event_num)) + '_' + str(confidence)[:4] + '/'
                 os.system('mkdir %s'%save_path)
-                cut_b = 60*60*int(start_flag.hour) + 60*int(start_flag.minute) + float(start_flag.second)
-                cut_e = 60*60*int(end_flag.hour) + 60*int(end_flag.minute) + float(end_flag.second)
+                cut_b = start_flag - kzdatetime
+                cut_e = end_flag - kzdatetime
+                # cut_b = 60*60*int(start_flag.hour) + 60*int(start_flag.minute) + float(start_flag.second)
+                # cut_e = 60*60*int(end_flag.hour) + 60*int(end_flag.minute) + float(end_flag.second)
                 ## SAC
                 os.putenv("SAC_DISPLAY_COPYRIGHT","0")
                 p=subprocess.Popen(['sac'],stdin=subprocess.PIPE)
